@@ -5,7 +5,7 @@ Python Turtle heatmap for S&amp;P 500 stocks
 
 There are 2 APIs used - you can choose one that you like! Neither need API keys:
 - Yahoo Finance `yfinance` - highly rate limited
-- stock-prices.on99.app/quotes - web-based request API
+- `stock-prices.on99.app/quotes` - web-based request API
 
 Ensure you have Turtle installed to run the app! The stock information updates every 2 seconds and refreshes the heatmap.
 

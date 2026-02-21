@@ -1,0 +1,101 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            output_name: stock-heatmap-linux
+            artifact_name: stock-heatmap-linux
+          - os: windows-latest
+            output_name: stock-heatmap-windows.exe
+            artifact_name: stock-heatmap-windows
+          - os: macos-latest
+            output_name: stock-heatmap-macos
+            artifact_name: stock-heatmap-macos
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller yfinance pandas requests
+
+      - name: Build with PyInstaller (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          pyinstaller --onefile \
+            --name ${{ matrix.output_name }} \
+            --hidden-import yfinance \
+            --hidden-import pandas \
+            --hidden-import requests \
+            main.py
+
+      - name: Build with PyInstaller (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --onefile --windowed `
+            --name ${{ matrix.output_name }} `
+            --hidden-import yfinance `
+            --hidden-import pandas `
+            --hidden-import requests `
+            main.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.output_name }}
+          retention-days: 30
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: Display structure of downloaded files
+        run: ls -R dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Build #${{ github.run_number }}"
+          body: |
+            Automated build from commit ${{ github.sha }}
+
+            Download the binary for your platform:
+            - **Linux**: `stock-heatmap-linux`
+            - **Windows**: `stock-heatmap-windows.exe`
+            - **macOS**: `stock-heatmap-macos`
+          files: |
+            dist/stock-heatmap-linux/stock-heatmap-linux
+            dist/stock-heatmap-windows/stock-heatmap-windows.exe
+            dist/stock-heatmap-macos/stock-heatmap-macos
+          draft: false
+          prerelease: false

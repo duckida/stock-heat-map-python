@@ -5,68 +5,136 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch: # allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            output_name: stock-heatmap-linux
-            artifact_name: stock-heatmap-linux
-          - os: windows-latest
-            output_name: stock-heatmap-windows.exe
-            artifact_name: stock-heatmap-windows
-          - os: macos-latest
-            output_name: stock-heatmap-macos
-            artifact_name: stock-heatmap-macos
-
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install dependencies
-        run: |
-          pip install pyinstaller yfinance pandas requests
-
-      - name: Build with PyInstaller (Linux/macOS)
-        if: runner.os != 'Windows'
+        run: pip install pyinstaller yfinance pandas requests
+      - name: Build
         run: |
           pyinstaller --onefile \
-            --name ${{ matrix.output_name }} \
+            --name stock-heatmap-linux \
             --hidden-import yfinance \
             --hidden-import pandas \
             --hidden-import requests \
             main.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stock-heatmap-linux
+          path: dist/stock-heatmap-linux
 
-      - name: Build with PyInstaller (Windows)
-        if: runner.os == 'Windows'
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyinstaller yfinance pandas requests
+      - name: Build
         run: |
           pyinstaller --onefile --windowed `
-            --name ${{ matrix.output_name }} `
+            --name stock-heatmap-windows `
             --hidden-import yfinance `
             --hidden-import pandas `
             --hidden-import requests `
             main.py
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.output_name }}
-          retention-days: 30
+          name: stock-heatmap-windows
+          path: dist/stock-heatmap-windows.exe
+
+  build-macos-intel:
+    name: Build on macOS (Intel x86_64)
+    runs-on: macos-13  # macos-13 = Intel runner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyinstaller yfinance pandas requests
+      - name: Build
+        run: |
+          pyinstaller --onefile \
+            --name stock-heatmap-x86_64 \
+            --hidden-import yfinance \
+            --hidden-import pandas \
+            --hidden-import requests \
+            --target-arch x86_64 \
+            main.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stock-heatmap-macos-x86_64
+          path: dist/stock-heatmap-x86_64
+
+  build-macos-arm:
+    name: Build on macOS (Apple Silicon arm64)
+    runs-on: macos-14  # macos-14 = Apple Silicon (M1/M2/M3) runner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyinstaller yfinance pandas requests
+      - name: Build
+        run: |
+          pyinstaller --onefile \
+            --name stock-heatmap-arm64 \
+            --hidden-import yfinance \
+            --hidden-import pandas \
+            --hidden-import requests \
+            --target-arch arm64 \
+            main.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stock-heatmap-macos-arm64
+          path: dist/stock-heatmap-arm64
+
+  build-macos-universal:
+    name: Create macOS Universal Binary
+    needs: [build-macos-intel, build-macos-arm]
+    runs-on: macos-latest
+    steps:
+      - name: Download Intel binary
+        uses: actions/download-artifact@v4
+        with:
+          name: stock-heatmap-macos-x86_64
+          path: dist/
+
+      - name: Download ARM binary
+        uses: actions/download-artifact@v4
+        with:
+          name: stock-heatmap-macos-arm64
+          path: dist/
+
+      - name: Create universal binary with lipo
+        run: |
+          lipo -create -output dist/stock-heatmap-macos \
+            dist/stock-heatmap-x86_64 \
+            dist/stock-heatmap-arm64
+          chmod +x dist/stock-heatmap-macos
+          lipo -info dist/stock-heatmap-macos
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stock-heatmap-macos-universal
+          path: dist/stock-heatmap-macos
 
   release:
     name: Create Release
-    needs: build
+    needs: [build-linux, build-windows, build-macos-universal]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
@@ -78,9 +146,6 @@ jobs:
         with:
           path: dist/
 
-      - name: Display structure of downloaded files
-        run: ls -R dist/
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -90,12 +155,12 @@ jobs:
             Automated build from commit ${{ github.sha }}
 
             Download the binary for your platform:
-            - **Linux**: `stock-heatmap-linux`
-            - **Windows**: `stock-heatmap-windows.exe`
-            - **macOS**: `stock-heatmap-macos`
+            - 🐧 **Linux**: `stock-heatmap-linux`
+            - 🪟 **Windows**: `stock-heatmap-windows.exe`
+            - 🍎 **macOS Universal** (Intel + Apple Silicon): `stock-heatmap-macos`
           files: |
             dist/stock-heatmap-linux/stock-heatmap-linux
             dist/stock-heatmap-windows/stock-heatmap-windows.exe
-            dist/stock-heatmap-macos/stock-heatmap-macos
+            dist/stock-heatmap-macos-universal/stock-heatmap-macos
           draft: false
           prerelease: false

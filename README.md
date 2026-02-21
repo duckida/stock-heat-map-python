@@ -10,7 +10,7 @@ There are 2 APIs used - you can choose one that you like! Neither need API keys:
 Ensure you have Turtle installed to run the app! The stock information updates every 2 seconds and refreshes the heatmap.
 
 ### Installation instructions:
-1. Clone the repo: `https://github.com/duckida/stock-heat-map-python && cd stock-heat-map-python`
+1. Clone the repo: `git clone https://github.com/duckida/stock-heat-map-python && cd stock-heat-map-python`
 2. Install dependencies: `uv sync`
 3. Run the app: `uv run main.py`
 

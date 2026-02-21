@@ -14,3 +14,4 @@ Ensure you have Turtle installed to run the app! The stock information updates e
 2. Install dependencies: `uv sync`
 3. Run the app: `uv run main.py`
 
+OR use `pipx`: `pipx install git+https://github.com/duckida/stock-heat-map-python.git`

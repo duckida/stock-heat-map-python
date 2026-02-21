@@ -14,4 +14,12 @@ Ensure you have Turtle installed to run the app! The stock information updates e
 2. Install dependencies: `uv sync`
 3. Run the app: `uv run main.py`
 
-OR use `pipx`: `pipx install git+https://github.com/duckida/stock-heat-map-python.git`
+OR use pipx: `pipx install git+https://github.com/duckida/stock-heat-map-python.git`
+
+### Tech stack
+- `turtle` for graphics
+- `yfinance` or `requests` for fetching stocks
+- `pandas` for processing raw data
+
+### AI usage
+I used Gemini to help me with Turtle and parsing data, and I used Claude to help me write the GitHub action.

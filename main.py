@@ -4,17 +4,18 @@ import turtle
 from time import sleep
 import requests
 
-screen = turtle.Screen()
-screen.setup(width=1000, height=500)
-screen.tracer(0, 0)
+def setup_turtle():
+    screen = turtle.Screen()
+    screen.setup(width=1000, height=500)
+    screen.tracer(0, 0)
 
-drawer = turtle.Turtle()
-drawer.penup()
+    drawer = turtle.Turtle()
+    drawer.penup()
 
-drawer.hideturtle()
-drawer.speed(0)
+    drawer.hideturtle()
+    drawer.speed(0)
 
-drawer.goto(-450, 240)
+    drawer.goto(-450, 240)
 
 tickers = [
     "A", "AAPL", "ABBV", "ABNB", "ABT", "ACN", "ADBE", "ADI", "ADM", "ADP",
@@ -222,20 +223,80 @@ def reset():
   down = []
 
   count = 0
+
+def reset_turtle():
   drawer.clear()
   drawer.penup()
   drawer.goto(-450, 240)
   drawer.setheading(0)  # Ensure it's facing East/Right
 
 
+## -- HTML --
+
+def create_html():
+    global count, width_max
+    
+    html_start = """<html>
+                    <head>
+                    <meta http-equiv="refresh" content="2">
+                    <style>
+                    .green {
+                    width: 20px;
+                    height: 20px;
+                    background-color: green;
+                    display: inline-block;
+                    }
+                    .red {
+                    width: 20px;
+                    height: 20px;
+                    background-color: red;
+                    display: inline-block;
+                    }
+                    .space {
+                    width: 20px;
+                    height: 0;
+                    }
+                    </style></head>
+                    <body>"""
+    html_middle = ""
+    html_end = "</body></html>"
+
+    for stock in up:
+        html_middle += "<div class='green'></div>"
+        count += 1
+
+        if count > width_max:
+          html_middle += "<div class='space'></div>"
+          count = 0
+      
+    for stock in down:
+        html_middle += ("<div class='red'></div>")
+        count += 1
+        
+        if count > width_max:
+          html_middle += ("<div class='space'></div>")
+          count = 0
+          
+          
+    return html_start + html_middle + html_end
+
+
+
+#setup_turtle()
 while True:
   stocks = fetch_stocks_api(tickers)
   calculate_up_down(stocks)
 
-  plot_up()
-  plot_down()
+  #plot_up()
+  #plot_down()
+  
+  html = create_html()
+  with open("index.html", "w") as f:
+      f.write(html)
 
-  screen.update()
+  #screen.update()
   sleep(2)
 
   reset()
+  #reset_turtle()
+

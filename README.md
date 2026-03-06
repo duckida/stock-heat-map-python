@@ -1,11 +1,18 @@
 # stock-heat-map-python
 Python Turtle or HTML heatmap for S&amp;P 500 stocks
 
-<img width="838" height="173" alt="Screenshot 2026-02-21 at 5 44 26 PM" src="https://github.com/user-attachments/assets/6dae6bc0-2c72-4e0c-8737-f8ceb29b0929" />
+<img width="838" height="173" alt="Screenshot 2026-02-21 at 5 44 26 PM" src="https://github.com/user-attachments/assets/6dae6bc0-2c72-4e0c-8737-f8ceb29b0929" /> 
+
+(Python Turtle mode)
+
+<img width="1038" height="309" alt="Screenshot 2026-03-06 at 6 04 09 PM" src="https://github.com/user-attachments/assets/87f4488d-b71b-40c4-a41d-af401e6c3856" /> 
+
+(HTML page mode)
+
 
 There are 2 APIs used - you can choose one that you like! Neither need API keys:
 - Yahoo Finance `yfinance` - highly rate limited
-- `stock-prices.on99.app/quotes` - web-based request API
+- `stock-prices.on99.app/quotes` - web-based request API with no rate limir
 
 The stock information updates every 2 seconds and refreshes the heatmap.
 By default the code writes to a file named index.html - you can also uncomment some lines to enable the Turtle functions

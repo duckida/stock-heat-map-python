@@ -292,7 +292,7 @@ while True:
 
   #plot_up()
   #plot_down()
-  
+
   html = create_html()
   with open("index.html", "w") as f:
       f.write(html)

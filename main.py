@@ -1,5 +1,4 @@
 import yfinance as yf
-from alpha_vantage.timeseries import TimeSeries
 import pandas as pd
 import turtle
 from time import sleep
